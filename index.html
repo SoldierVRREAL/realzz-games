@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#08051a">
+<title>Realzz Games</title>
+<style>
+:root{--bg:#050511;--panel:#0a1025;--panel2:#10132c;--purple:#7b22ff;--purple2:#bd39ff;--blue:#0878ff;--text:#f7f5ff;--muted:#a9b5e9;--border:#4620a4}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 75% 0%,#190a49 0%,#080719 38%,var(--bg) 78%);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif;min-height:100vh}
+button,input,textarea{font:inherit}
+button,a{ -webkit-tap-highlight-color:transparent}
+.topbar{height:70px;display:flex;align-items:center;gap:22px;padding:0 26px;border-bottom:1px solid #342070;background:rgba(5,5,20,.92);position:sticky;top:0;z-index:5}
+.brand{width:225px;flex-shrink:0;color:#a43cff;font-weight:1000;font-size:25px;font-style:italic;letter-spacing:-1.5px;text-shadow:0 0 18px #7127ff}
+.search-wrap{max-width:480px;flex:1;position:relative}
+.search-wrap:before{content:'⌕';position:absolute;left:15px;top:6px;font-size:29px;color:#a9a1ff}
+#search{width:100%;height:44px;border:1px solid #39247b;border-radius:15px;background:#08091b;color:white;padding:0 16px 0 46px;outline:none}
+#search:focus{border-color:#9a51ff;box-shadow:0 0 0 3px #782bff22}
+.top-spacer{flex:1}
+.quest-label{font-weight:700;white-space:nowrap;color:#f5f2ff}
+.profile{width:43px;height:43px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#33217d,#17113e);font-size:23px;color:#c2b4ff}
+.layout{display:grid;grid-template-columns:272px minmax(0,1fr);min-height:calc(100vh - 70px)}
+.sidebar{border-right:1px solid #39207b;padding:25px 14px;display:flex;flex-direction:column;gap:8px;background:linear-gradient(180deg,#080719,#080616)}
+.nav{height:52px;border:1px solid transparent;background:transparent;color:#d5d8f8;text-align:left;padding:0 20px;border-radius:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:17px}
+.nav .ico{font-size:22px;width:20px;text-align:center;color:#a7aaff}
+.nav:hover{background:#17103c}
+.nav.active{background:linear-gradient(100deg,#5514ed,#073cba);border-color:#693bff;box-shadow:0 0 22px #4a15ff30;color:white}
+.side-mark{margin-top:auto;padding:25px 15px;color:#6923dc;font-weight:1000;font-size:27px;font-style:italic;transform:rotate(-7deg);opacity:.8}
+.content{padding:24px 3.2% 42px;min-width:0}
+.hero{height:150px;display:flex;align-items:center;gap:24px;padding:8px 18px 18px;border-bottom:1px solid #40209b;position:relative;overflow:hidden;margin-bottom:14px}
+.hero:after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,#07071b 0%,#07071b 42%,#07071b66 68%,#08051a55 100%),url('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1500&q=85') center 48%/cover;opacity:.62;z-index:0}
+.avatar{width:138px;height:138px;border-radius:50%;border:4px solid #822cff;box-shadow:0 0 28px #6f1dff8c;background:radial-gradient(circle at 50% 35%,#28135a,#03030d 72%);display:grid;place-items:center;flex-shrink:0;position:relative;z-index:1;overflow:hidden}
+.avatar svg{width:95%;height:95%}
+.hero-copy{position:relative;z-index:1}
+.hero h1{font-size:clamp(30px,3vw,48px);margin:0 0 7px;letter-spacing:-1.5px}
+.hero p{margin:0;color:#aeb7ff;font-size:20px}
+.section-head{display:flex;justify-content:space-between;align-items:center;margin:21px 0 15px;gap:12px}
+.section-head h2{font-size:23px;margin:0}
+.count{color:#aaa9df;font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:17px 22px}
+.game-card{background:linear-gradient(160deg,#0b1025,#070b1b);border:1px solid #5824d5;border-radius:13px;overflow:hidden;min-width:0;box-shadow:0 8px 22px #0005;transition:transform .18s,border-color .18s}
+.game-card:hover{transform:translateY(-3px);border-color:#a33cff;box-shadow:0 10px 28px #4513b533}
+.cover{height:165px;background:#14122b;position:relative;overflow:hidden}
+.cover img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s}
+.game-card:hover .cover img{transform:scale(1.04)}
+.cover-fallback{height:100%;display:grid;place-items:center;font-size:55px;background:radial-gradient(circle at 70% 20%,#5223a8,#10132e 55%,#080817)}
+.game-info{padding:12px 16px 13px}
+.game-info h3{font-size:19px;margin:0 0 7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kind{display:flex;align-items:center;gap:8px;color:#b4b8ff;font-size:13px;margin-bottom:9px}
+.headset{font-size:20px}
+.game-info p{color:#b8c0f0;font-size:14px;line-height:1.4;min-height:39px;margin:0 0 10px}
+.download{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:10px 12px;border-radius:9px;background:linear-gradient(100deg,#087bff,#0862e8);color:white;text-decoration:none;font-size:14px;font-weight:700;border:1px solid #238cff;cursor:pointer}
+.download:hover{filter:brightness(1.15)}
+.empty{display:none;padding:40px;text-align:center;border:1px dashed #5838a2;border-radius:14px;color:#b8b1e4}
+.admin-panel{display:none;margin-top:28px;padding:22px;border:1px solid #7b39d9;border-radius:14px;background:#0b0a20}
+.admin-panel h2{margin-top:0}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.admin-panel input,.admin-panel textarea{width:100%;padding:12px;border:1px solid #3b2c73;border-radius:8px;background:#050613;color:white;outline:none}
+.admin-panel textarea{min-height:82px;resize:vertical}
+.admin-panel input:focus,.admin-panel textarea:focus{border-color:#9b4cff}
+.form-full{grid-column:1/-1}
+.primary,.secondary,.danger{border:0;border-radius:8px;padding:11px 15px;color:white;font-weight:700;cursor:pointer}
+.primary{background:#7627ed}.secondary{background:#252044;border:1px solid #514078}.danger{background:#5d1839}
+.admin-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}
+.admin-note{color:#aaa7d2;font-size:13px;line-height:1.5}
+.delete-game{display:none;margin-top:8px;width:100%;padding:7px;border-radius:7px;border:1px solid #713052;background:#281020;color:#ffb7d4;cursor:pointer}
+body.admin-mode .delete-game{display:block}
+footer{text-align:center;color:#797aa8;padding:28px;font-size:13px}
+@media(max-width:1050px){.layout{grid-template-columns:205px minmax(0,1fr)}.brand{width:190px;font-size:22px}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.content{padding-left:22px;padding-right:22px}}
+@media(max-width:700px){.topbar{padding:0 12px;gap:10px;height:62px}.brand{width:auto;font-size:18px}.search-wrap{max-width:none}.quest-label{display:none}.profile{width:35px;height:35px}.layout{display:block}.sidebar{position:sticky;top:62px;z-index:4;display:flex;flex-direction:row;padding:8px;gap:5px;border-right:0;border-bottom:1px solid #39207b;overflow-x:auto}.nav{height:42px;padding:0 12px;gap:7px;white-space:nowrap;font-size:13px}.nav .ico{font-size:17px}.side-mark{display:none}.content{padding:14px 12px 30px}.hero{height:125px;padding:8px;gap:13px}.avatar{width:86px;height:86px}.hero h1{font-size:27px}.hero p{font-size:14px}.grid{grid-template-columns:1fr;gap:14px}.cover{height:190px}.form-grid{grid-template-columns:1fr}.form-full{grid-column:auto}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">♛ REALZZ GAMES</div>
+  <div class="search-wrap"><input id="search" type="search" placeholder="Search games..." aria-label="Search games"></div>
+  <div class="top-spacer"></div>
+  <div class="quest-label">⌁ &nbsp; Meta Quest &nbsp;⌄</div>
+  <div class="profile" title="Profile">♟</div>
+</header>
+<div class="layout">
+  <aside class="sidebar">
+    <button class="nav" data-view="Home"><span class="ico">⌂</span>Home</button>
+    <button class="nav active" data-view="Store"><span class="ico">♧</span>Store</button>
+    <button class="nav" data-view="Library"><span class="ico">▤</span>Library</button>
+    <button class="nav" data-view="Settings"><span class="ico">⚙</span>Settings</button>
+    <div class="side-mark">♛<br>REALZZ</div>
+  </aside>
+  <main class="content">
+    <section class="hero">
+      <div class="avatar" aria-label="Realzz Games logo">
+        <svg viewBox="0 0 100 100" role="img" aria-label="Purple monster logo">
+          <defs><linearGradient id="face" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#201044"/><stop offset="1" stop-color="#02020b"/></linearGradient></defs>
+          <path d="M18 28 L25 8 L38 19 L52 8 L66 20 L81 11 L83 37 Q95 52 79 75 L65 91 L51 82 L35 93 L18 75 Q4 53 18 28Z" fill="url(#face)" stroke="#6422d5" stroke-width="2"/>
+          <path d="M17 39 L40 43 L31 55 L15 51Z M83 39 L60 43 L69 55 L85 51Z" fill="#d5b4ff"/>
+          <path d="M24 43 L35 45 L29 51Z M76 43 L65 45 L71 51Z" fill="#7c22ff"/>
+          <path d="M31 65 Q50 79 69 65 L63 79 L55 74 L49 81 L43 74 L36 78Z" fill="#a42cff"/>
+          <path d="M38 67 L42 72 M49 68 L50 75 M60 67 L57 72" stroke="#f7eaff" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="hero-copy"><h1>Realzz Games</h1><p>my own games. play what i make.</p></div>
+    </section>
+    <div class="section-head"><h2 id="section-title">Quest Game Library</h2><span class="count" id="count"></span></div>
+    <section class="grid" id="games"></section>
+    <div class="empty" id="empty">No games found. Try another search.</div>
+
+    <section class="admin-panel" id="admin">
+      <h2>Publish a game</h2>
+      <p class="admin-note">Prototype publishing form. Listings are saved only in this browser. Do not use this public demo for private APKs or real admin security.</p>
+      <div class="form-grid">
+        <input id="game-title" placeholder="Game title *" maxlength="80">
+        <input id="game-cover" placeholder="Cover image URL (https://...)">
+        <textarea id="game-description" class="form-full" placeholder="Game description"></textarea>
+        <input id="game-link" class="form-full" placeholder="Download URL (https://...) *">
+      </div>
+      <div class="admin-actions">
+        <button class="primary" id="publish">Publish listing</button>
+        <button class="secondary" id="close-admin">Close panel</button>
+      </div>
+      <p class="admin-note">To make publishing owner-only across the internet, connect a backend with real authentication and file storage. GitHub Pages alone cannot protect this panel.</p>
+    </section>
+  </main>
+</div>
+<footer>REALZZ GAMES &nbsp;•&nbsp; Made for Quest players</footer>
+<script>
+const starterGames = [
+ {id:"gibrilla",title:"Gibrilla Tag",description:"Run, climb, and tag in a wild jungle. Move fast, watch your back.",cover:"https://images.unsplash.com/photo-1511497584788-876760111969?auto=format&fit=crop&w=900&q=85",link:""},
+ {id:"slendytubbies",title:"Slendytubbies Fan Game",description:"The tubbies are back... but something is different.",cover:"https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=900&q=85",link:""},
+ {id:"next",title:"My Next Game",description:"A new world. New mechanics. Same Realzz.",cover:"https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=900&q=85",link:""},
+ {id:"parkour",title:"Parkour Zone",description:"Jump. Climb. Reach the top.",cover:"https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=900&q=85",link:""},
+ {id:"survival",title:"Survival Island",description:"Gather. Build. Survive.",cover:"https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=85",link:""},
+ {id:"horror",title:"Horror Nights",description:"Something is watching...",cover:"https://images.unsplash.com/photo-1509248961158-e54f6934749c?auto=format&fit=crop&w=900&q=85",link:""}
+];
+let games;
+try { games = JSON.parse(localStorage.getItem("realzz-games-list")) || starterGames; }
+catch { games = starterGames; }
+let adminMode = false;
+const $ = id => document.getElementById(id);
+function safeUrl(value) {
+  if (!value) return "";
+  try { const u = new URL(value); return ["https:","http:"].includes(u.protocol) ? u.href : ""; }
+  catch { return ""; }
+}
+function saveGames() {
+  try { localStorage.setItem("realzz-games-list", JSON.stringify(games)); return true; }
+  catch { alert("Could not save the listing in this browser."); return false; }
+}
+function renderGames() {
+  const query = $("search").value.trim().toLowerCase();
+  const visible = games.filter(g => (g.title+" "+g.description).toLowerCase().includes(query));
+  $("games").replaceChildren();
+  $("count").textContent = visible.length + (visible.length === 1 ? " GAME" : " GAMES");
+  $("empty").style.display = visible.length ? "none" : "block";
+  visible.forEach(game => {
+    const card = document.createElement("article"); card.className = "game-card";
+    const cover = document.createElement("div"); cover.className = "cover";
+    if (safeUrl(game.cover)) {
+      const img = document.createElement("img"); img.src = safeUrl(game.cover); img.alt = game.title + " cover"; img.loading = "lazy";
+      img.onerror = () => { cover.innerHTML = '<div class="cover-fallback">🎮</div>'; };
+      cover.append(img);
+    } else { cover.innerHTML = '<div class="cover-fallback">🎮</div>'; }
+    const info = document.createElement("div"); info.className = "game-info";
+    const title = document.createElement("h3"); title.textContent = game.title;
+    const kind = document.createElement("div"); kind.className = "kind"; kind.innerHTML = '<span class="headset">⌁</span><span>Quest Game</span>';
+    const desc = document.createElement("p"); desc.textContent = game.description || "A game from Realzz Games.";
+    const link = document.createElement("a"); link.className = "download"; link.textContent = "⇩  Download";
+    if (safeUrl(game.link)) { link.href = safeUrl(game.link); link.target = "_blank"; link.rel = "noopener noreferrer"; }
+    else { link.href = "#"; link.addEventListener("click", e => { e.preventDefault(); alert("A download link has not been added for this game yet."); }); }
+    info.append(title, kind, desc, link);
+    if (adminMode) {
+      const del = document.createElement("button"); del.className = "delete-game"; del.textContent = "Remove listing";
+      del.addEventListener("click", () => { if (confirm("Remove " + game.title + "?")) { games = games.filter(g => g.id !== game.id); saveGames(); renderGames(); } });
+      info.append(del);
+    }
+    card.append(cover, info); $("games").append(card);
+  });
+}
+$("search").addEventListener("input", renderGames);
+document.querySelectorAll(".nav").forEach(button => button.addEventListener("click", () => {
+  document.querySelectorAll(".nav").forEach(b => b.classList.remove("active"));
+  button.classList.add("active");
+  const view = button.dataset.view;
+  if (view === "Settings") {
+    alert("Settings: this demo stores game listings in this browser only.");
+  } else if (view === "Library") {
+    $("section-title").textContent = "Your Game Library";
+    alert("The library view is a visual prototype. Downloaded Quest apps are managed on your headset.");
+  } else {
+    $("section-title").textContent = view === "Home" ? "Welcome to Realzz Games" : "Quest Game Library";
+  }
+}));
+$("publish").addEventListener("click", () => {
+  const title = $("game-title").value.trim();
+  const description = $("game-description").value.trim();
+  const coverRaw = $("game-cover").value.trim();
+  const linkRaw = $("game-link").value.trim();
+  const link = safeUrl(linkRaw);
+  const cover = coverRaw ? safeUrl(coverRaw) : "";
+  if (!title || !link) { alert("Add a game title and a valid HTTP(S) download URL."); return; }
+  if (coverRaw && !cover) { alert("Enter a valid HTTP(S) cover image URL."); return; }
+  games.unshift({id:"game-"+Date.now(),title,description,cover,link});
+  if (!saveGames()) { games.shift(); return; }
+  $("game-title").value = $("game-description").value = $("game-cover").value = $("game-link").value = "";
+  renderGames(); alert("Listing added in this browser.");
+});
+$("close-admin").addEventListener("click", () => { $("admin").style.display = "none"; });
+/* Demo-only admin toggle: intentionally not secure. Replace with server authentication before publishing. */
+document.querySelector(".profile").addEventListener("click", () => {
+  if (!adminMode) {
+    const note = "This demo has no secure owner login. Anyone who can open the page can access its local publishing panel. Continue for local testing?";
+    if (!confirm(note)) return;
+    adminMode = true; document.body.classList.add("admin-mode");
+    $("admin").style.display = "block";
+    $("admin").scrollIntoView({behavior:"smooth",block:"start"});
+  } else {
+    adminMode = false; document.body.classList.remove("admin-mode"); $("admin").style.display = "none";
+  }
+});
+renderGames();
+</script>
+</body>
+</html>
