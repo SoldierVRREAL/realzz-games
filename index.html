@@ -18,8 +18,11 @@ button,a{ -webkit-tap-highlight-color:transparent}
 #search{width:100%;height:44px;border:1px solid #39247b;border-radius:15px;background:#08091b;color:white;padding:0 16px 0 46px;outline:none}
 #search:focus{border-color:#9a51ff;box-shadow:0 0 0 3px #782bff22}
 .top-spacer{flex:1}
-.quest-label{font-weight:700;white-space:nowrap;color:#f5f2ff}
-.profile{width:43px;height:43px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#33217d,#17113e);font-size:23px;color:#c2b4ff}
+.quest-label{font-weight:700;white-space:nowrap;color:#f5f2ff;display:flex;align-items:center;gap:9px}
+.meta-mark{width:35px;height:22px;color:#f5f2ff;display:block}
+.chevron{color:#9f9bc8;margin-left:3px}
+.profile{width:43px;height:43px;border:0;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#33217d,#17113e);color:#c2b4ff;cursor:pointer;padding:10px}
+.profile svg{width:100%;height:100%}
 .layout{display:grid;grid-template-columns:272px minmax(0,1fr);min-height:calc(100vh - 70px)}
 .sidebar{border-right:1px solid #39207b;padding:25px 14px;display:flex;flex-direction:column;gap:8px;background:linear-gradient(180deg,#080719,#080616)}
 .nav{height:52px;border:1px solid transparent;background:transparent;color:#d5d8f8;text-align:left;padding:0 20px;border-radius:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:17px}
@@ -76,14 +79,22 @@ footer{text-align:center;color:#797aa8;padding:28px;font-size:13px}
   <div class="brand">♛ REALZZ GAMES</div>
   <div class="search-wrap"><input id="search" type="search" placeholder="Search games..." aria-label="Search games"></div>
   <div class="top-spacer"></div>
-  <div class="quest-label">⌁ &nbsp; Meta Quest &nbsp;⌄</div>
-  <div class="profile" title="Profile">♟</div>
+  <div class="quest-label">
+    <svg class="meta-mark" viewBox="0 0 48 28" aria-label="Meta logo" role="img">
+      <path d="M3 20.8C7.2 10.2 11.4 4 16.2 4c4.1 0 6.8 5.2 10.2 11.8C29.8 22.1 32 24 35 24c4.5 0 7.8-6.3 10-12.2" fill="none" stroke="currentColor" stroke-width="4.2" stroke-linecap="round"/>
+      <path d="M3 20.8C5.1 24 7.2 24 9 21.5l7.2-11.3C18.1 7.2 20.5 9.8 23 14" fill="none" stroke="currentColor" stroke-width="4.2" stroke-linecap="round"/>
+    </svg>
+    <span>Meta Quest</span><span class="chevron">⌄</span>
+  </div>
+  <button class="profile" title="Admin / profile" aria-label="Open admin panel">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" fill="currentColor"/><path d="M4 21c.5-4.5 3.2-7 8-7s7.5 2.5 8 7" fill="currentColor"/></svg>
+  </button>
 </header>
 <div class="layout">
   <aside class="sidebar">
     <button class="nav" data-view="Home"><span class="ico">⌂</span>Home</button>
     <button class="nav active" data-view="Store"><span class="ico">♧</span>Store</button>
-    <button class="nav" data-view="Library"><span class="ico">▤</span>Library</button>
+    <button class="nav" data-view="Library"><span class="ico">▦</span>Library</button>
     <button class="nav" data-view="Settings"><span class="ico">⚙</span>Settings</button>
     <div class="side-mark">♛<br>REALZZ</div>
   </aside>
