@@ -118,117 +118,101 @@ footer{text-align:center;color:#797aa8;padding:28px;font-size:13px}
 
     <section class="admin-panel" id="admin">
       <h2>Publish a game</h2>
-      <p class="admin-note">Prototype publishing form. Listings are saved only in this browser. Do not use this public demo for private APKs or real admin security.</p>
-      <div class="form-grid">
-        <input id="game-title" placeholder="Game title *" maxlength="80">
-        <input id="game-cover" placeholder="Cover image URL (https://...)">
-        <textarea id="game-description" class="form-full" placeholder="Game description"></textarea>
-        <input id="game-link" class="form-full" placeholder="Download URL (https://...) *">
+      <p class="admin-note" id="login-status">Sign in with your owner Google account to manage games.</p>
+      <div class="admin-actions"><button class="primary" id="login">Sign in with Google</button><button class="secondary" id="logout" style="display:none">Sign out</button></div>
+      <div id="upload-fields" style="display:none">
+        <div class="form-grid" style="margin-top:14px">
+          <input id="game-title" placeholder="Game title *" maxlength="80">
+          <input id="game-cover-file" type="file" accept="image/*" aria-label="Cover image file">
+          <textarea id="game-description" class="form-full" placeholder="Game description"></textarea>
+          <label class="form-full admin-note">Game download file (APK, ZIP, or other file)<input id="game-file" type="file" style="display:block;margin-top:8px" required></label>
+        </div>
+        <div class="admin-actions"><button class="primary" id="publish">Upload and publish</button><button class="secondary" id="close-admin">Close panel</button></div>
       </div>
-      <div class="admin-actions">
-        <button class="primary" id="publish">Publish listing</button>
-        <button class="secondary" id="close-admin">Close panel</button>
-      </div>
-      <p class="admin-note">To make publishing owner-only across the internet, connect a backend with real authentication and file storage. GitHub Pages alone cannot protect this panel.</p>
+      <p class="admin-note">Firebase Authentication, Firestore, Storage, and the security rules must all be configured before publishing. Never rely on the hidden panel alone for security.</p>
     </section>
   </main>
 </div>
 <footer>REALZZ GAMES &nbsp;•&nbsp; Made for Quest players</footer>
-<script>
-const starterGames = [
- {id:"gibrilla",title:"Gibrilla Tag",description:"Run, climb, and tag in a wild jungle. Move fast, watch your back.",cover:"https://images.unsplash.com/photo-1511497584788-876760111969?auto=format&fit=crop&w=900&q=85",link:""},
- {id:"slendytubbies",title:"Slendytubbies Fan Game",description:"The tubbies are back... but something is different.",cover:"https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=900&q=85",link:""},
- {id:"next",title:"My Next Game",description:"A new world. New mechanics. Same Realzz.",cover:"https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=900&q=85",link:""},
- {id:"parkour",title:"Parkour Zone",description:"Jump. Climb. Reach the top.",cover:"https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=900&q=85",link:""},
- {id:"survival",title:"Survival Island",description:"Gather. Build. Survive.",cover:"https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=85",link:""},
- {id:"horror",title:"Horror Nights",description:"Something is watching...",cover:"https://images.unsplash.com/photo-1509248961158-e54f6934749c?auto=format&fit=crop&w=900&q=85",link:""}
-];
-let games;
-try { games = JSON.parse(localStorage.getItem("realzz-games-list")) || starterGames; }
-catch { games = starterGames; }
-let adminMode = false;
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-storage.js";
+
+// Paste your Firebase web-app values below. Firebase Console > Project settings > Your apps.
+const firebaseConfig = {
+  apiKey: "PASTE_API_KEY_HERE",
+  authDomain: "PASTE_PROJECT_ID_HERE.firebaseapp.com",
+  projectId: "PASTE_PROJECT_ID_HERE",
+  storageBucket: "PASTE_STORAGE_BUCKET_HERE",
+  messagingSenderId: "PASTE_MESSAGING_SENDER_ID_HERE",
+  appId: "PASTE_APP_ID_HERE"
+};
+// Replace this with the exact Google account email you will use to manage the store.
+const OWNER_EMAIL = "PASTE_YOUR_GOOGLE_EMAIL_HERE".toLowerCase();
+
 const $ = id => document.getElementById(id);
-function safeUrl(value) {
-  if (!value) return "";
-  try { const u = new URL(value); return ["https:","http:"].includes(u.protocol) ? u.href : ""; }
-  catch { return ""; }
-}
-function saveGames() {
-  try { localStorage.setItem("realzz-games-list", JSON.stringify(games)); return true; }
-  catch { alert("Could not save the listing in this browser."); return false; }
-}
+const configured = !Object.values(firebaseConfig).some(v => String(v).startsWith("PASTE_"));
+let auth, db, storage, games = [], owner = false, currentUser = null;
+function safeUrl(value) { try { const u = new URL(value); return ["https:","http:"].includes(u.protocol) ? u.href : ""; } catch { return ""; } }
+function showError(error) { console.error(error); alert("Firebase error: " + (error?.message || error) + "\nCheck your Firebase config, Authentication, Storage, Firestore, and security rules."); }
 function renderGames() {
-  const query = $("search").value.trim().toLowerCase();
-  const visible = games.filter(g => (g.title+" "+g.description).toLowerCase().includes(query));
-  $("games").replaceChildren();
-  $("count").textContent = visible.length + (visible.length === 1 ? " GAME" : " GAMES");
+  const queryText = $("search").value.trim().toLowerCase();
+  const visible = games.filter(g => (g.title + " " + (g.description || "")).toLowerCase().includes(queryText));
+  $("games").replaceChildren(); $("count").textContent = visible.length + (visible.length === 1 ? " GAME" : " GAMES");
   $("empty").style.display = visible.length ? "none" : "block";
+  $("empty").textContent = queryText ? "No games match your search." : "No games published yet. Check back soon.";
   visible.forEach(game => {
     const card = document.createElement("article"); card.className = "game-card";
     const cover = document.createElement("div"); cover.className = "cover";
-    if (safeUrl(game.cover)) {
-      const img = document.createElement("img"); img.src = safeUrl(game.cover); img.alt = game.title + " cover"; img.loading = "lazy";
-      img.onerror = () => { cover.innerHTML = '<div class="cover-fallback">🎮</div>'; };
-      cover.append(img);
-    } else { cover.innerHTML = '<div class="cover-fallback">🎮</div>'; }
+    if (safeUrl(game.cover)) { const img = document.createElement("img"); img.src = safeUrl(game.cover); img.alt = game.title + " cover"; img.loading = "lazy"; img.onerror = () => { cover.innerHTML = '<div class="cover-fallback">🎮</div>'; }; cover.append(img); }
+    else cover.innerHTML = '<div class="cover-fallback">🎮</div>';
     const info = document.createElement("div"); info.className = "game-info";
     const title = document.createElement("h3"); title.textContent = game.title;
     const kind = document.createElement("div"); kind.className = "kind"; kind.innerHTML = '<span class="headset">⌁</span><span>Quest Game</span>';
     const desc = document.createElement("p"); desc.textContent = game.description || "A game from Realzz Games.";
-    const link = document.createElement("a"); link.className = "download"; link.textContent = "⇩  Download";
-    if (safeUrl(game.link)) { link.href = safeUrl(game.link); link.target = "_blank"; link.rel = "noopener noreferrer"; }
-    else { link.href = "#"; link.addEventListener("click", e => { e.preventDefault(); alert("A download link has not been added for this game yet."); }); }
+    const link = document.createElement("a"); link.className = "download"; link.textContent = "⇩  Download"; link.href = safeUrl(game.downloadUrl) || "#";
+    if (link.href === "#") link.addEventListener("click", e => { e.preventDefault(); alert("This game has no download link yet."); }); else { link.target = "_blank"; link.rel = "noopener noreferrer"; }
     info.append(title, kind, desc, link);
-    if (adminMode) {
-      const del = document.createElement("button"); del.className = "delete-game"; del.textContent = "Remove listing";
-      del.addEventListener("click", () => { if (confirm("Remove " + game.title + "?")) { games = games.filter(g => g.id !== game.id); saveGames(); renderGames(); } });
-      info.append(del);
-    }
+    if (owner) { const del = document.createElement("button"); del.className = "delete-game"; del.style.display = "block"; del.textContent = "Remove listing"; del.addEventListener("click", async () => { if (!confirm("Remove " + game.title + "?")) return; try { await deleteDoc(doc(db,"games",game.id)); if (game.storagePath) await deleteObject(ref(storage,game.storagePath)).catch(()=>{}); if (game.coverPath) await deleteObject(ref(storage,game.coverPath)).catch(()=>{}); await loadGames(); } catch(e) { showError(e); } }); info.append(del); }
     card.append(cover, info); $("games").append(card);
   });
 }
+async function loadGames() {
+  if (!db) return;
+  try { const snap = await getDocs(query(collection(db,"games"),orderBy("createdAt","desc"))); games = snap.docs.map(d => ({id:d.id,...d.data()})); renderGames(); }
+  catch(e) { showError(e); }
+}
+function updateAdmin(user) {
+  currentUser = user; owner = !!user && user.email?.toLowerCase() === OWNER_EMAIL && !OWNER_EMAIL.startsWith("paste_");
+  $("login-status").textContent = !user ? "Sign in with Google using your owner account." : owner ? "Signed in as owner: " + user.email : "Signed in as " + (user.email || "unknown") + ". This account is not the configured owner.";
+  $("login").style.display = user ? "none" : "inline-block"; $("logout").style.display = user ? "inline-block" : "none"; $("upload-fields").style.display = owner ? "block" : "none";
+  document.body.classList.toggle("admin-mode", owner); renderGames();
+}
 $("search").addEventListener("input", renderGames);
-document.querySelectorAll(".nav").forEach(button => button.addEventListener("click", () => {
-  document.querySelectorAll(".nav").forEach(b => b.classList.remove("active"));
-  button.classList.add("active");
-  const view = button.dataset.view;
-  if (view === "Settings") {
-    alert("Settings: this demo stores game listings in this browser only.");
-  } else if (view === "Library") {
-    $("section-title").textContent = "Your Game Library";
-    alert("The library view is a visual prototype. Downloaded Quest apps are managed on your headset.");
-  } else {
-    $("section-title").textContent = view === "Home" ? "Welcome to Realzz Games" : "Quest Game Library";
-  }
-}));
-$("publish").addEventListener("click", () => {
-  const title = $("game-title").value.trim();
-  const description = $("game-description").value.trim();
-  const coverRaw = $("game-cover").value.trim();
-  const linkRaw = $("game-link").value.trim();
-  const link = safeUrl(linkRaw);
-  const cover = coverRaw ? safeUrl(coverRaw) : "";
-  if (!title || !link) { alert("Add a game title and a valid HTTP(S) download URL."); return; }
-  if (coverRaw && !cover) { alert("Enter a valid HTTP(S) cover image URL."); return; }
-  games.unshift({id:"game-"+Date.now(),title,description,cover,link});
-  if (!saveGames()) { games.shift(); return; }
-  $("game-title").value = $("game-description").value = $("game-cover").value = $("game-link").value = "";
-  renderGames(); alert("Listing added in this browser.");
+document.querySelectorAll(".nav").forEach(button => button.addEventListener("click", () => { document.querySelectorAll(".nav").forEach(b => b.classList.remove("active")); button.classList.add("active"); const view=button.dataset.view; if(view==="Settings") alert("Store settings are managed in Firebase Console."); else if(view==="Library"){ $("section-title").textContent="Your Game Library"; alert("Downloaded Quest apps are managed on your headset."); } else $("section-title").textContent=view==="Home"?"Welcome to Realzz Games":"Quest Game Library"; }));
+document.querySelector(".profile").addEventListener("click", () => { $("admin").style.display="block"; $("admin").scrollIntoView({behavior:"smooth",block:"start"}); });
+$("close-admin").addEventListener("click",()=>$("admin").style.display="none");
+$("login").addEventListener("click",async()=>{try{await signInWithPopup(auth,new GoogleAuthProvider());}catch(e){showError(e);}});
+$("logout").addEventListener("click",async()=>{try{await signOut(auth);}catch(e){showError(e);}});
+$("publish").addEventListener("click",async()=>{
+  if(!owner){alert("Only the configured owner account can publish.");return;}
+  const title=$("game-title").value.trim(), description=$("game-description").value.trim(), gameFile=$("game-file").files[0], coverFile=$("game-cover-file").files[0];
+  if(!title||!gameFile){alert("Enter a title and select a game file.");return;}
+  const btn=$("publish"); btn.disabled=true; btn.textContent="Uploading…";
+  try {
+    const safeName=gameFile.name.replace(/[^a-zA-Z0-9._-]/g,"_");
+    const storagePath="games/"+Date.now()+"_"+safeName; const gameRef=ref(storage,storagePath);
+    await uploadBytes(gameRef,gameFile,{contentType:gameFile.type||"application/octet-stream"}); const downloadUrl=await getDownloadURL(gameRef);
+    let cover="",coverPath="";
+    if(coverFile){ coverPath="covers/"+Date.now()+"_"+coverFile.name.replace(/[^a-zA-Z0-9._-]/g,"_"); const cr=ref(storage,coverPath); await uploadBytes(cr,coverFile,{contentType:coverFile.type||"image/jpeg"}); cover=await getDownloadURL(cr); }
+    await addDoc(collection(db,"games"),{title,description,cover,downloadUrl,storagePath,coverPath,createdAt:serverTimestamp(),ownerUid:currentUser.uid});
+    $("game-title").value=""; $("game-description").value=""; $("game-file").value=""; $("game-cover-file").value=""; await loadGames(); alert("Game published!");
+  } catch(e){showError(e);} finally {btn.disabled=false;btn.textContent="Upload and publish";}
 });
-$("close-admin").addEventListener("click", () => { $("admin").style.display = "none"; });
-/* Demo-only admin toggle: intentionally not secure. Replace with server authentication before publishing. */
-document.querySelector(".profile").addEventListener("click", () => {
-  if (!adminMode) {
-    const note = "This demo has no secure owner login. Anyone who can open the page can access its local publishing panel. Continue for local testing?";
-    if (!confirm(note)) return;
-    adminMode = true; document.body.classList.add("admin-mode");
-    $("admin").style.display = "block";
-    $("admin").scrollIntoView({behavior:"smooth",block:"start"});
-  } else {
-    adminMode = false; document.body.classList.remove("admin-mode"); $("admin").style.display = "none";
-  }
-});
-renderGames();
+if (!configured) { $("login-status").textContent="Setup needed: replace the Firebase config placeholders and OWNER_EMAIL in this HTML, then enable Google Authentication, Firestore, and Storage."; $("empty").style.display="block"; $("empty").textContent="Firebase isn't configured yet. Add your project settings to this HTML to load games."; $("count").textContent="0 GAMES"; }
+else { try { const app=initializeApp(firebaseConfig); auth=getAuth(app); db=getFirestore(app); storage=getStorage(app); onAuthStateChanged(auth,async user=>{updateAdmin(user); await loadGames();}); } catch(e){showError(e);} }
 </script>
 </body>
 </html>
